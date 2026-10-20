@@ -1,0 +1,264 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Ruleta del día invisible</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: ruleta grande a la izquierda y tarjeta de pregunta a la derecha; en celular, una columna. */
+:root {
+  --bg: #eef2f3;
+  --surface: #ffffff;
+  --ink: #14201f;
+  --muted: #4c5f5e;
+  --line: #cdd8d9;
+  --s1: #b5402f;
+  --s2: #1f6f8b;
+  --s3: #5d7a1f;
+  --s4: #7b3f98;
+  --s5: #8a5a00;
+  --s6: #3a4a8c;
+  --on-seg: #ffffff;
+  --font-display: ui-rounded, "Avenir Next", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1719; --surface: #172326; --ink: #e8f0f0; --muted: #9db3b2; --line: #2a3d40;
+    --s1: #f08a78; --s2: #6cc0dc; --s3: #a8cc62; --s4: #c99be0; --s5: #e8b455; --s6: #8fa0e8;
+    --on-seg: #11181a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1719; --surface: #172326; --ink: #e8f0f0; --muted: #9db3b2; --line: #2a3d40;
+  --s1: #f08a78; --s2: #6cc0dc; --s3: #a8cc62; --s4: #c99be0; --s5: #e8b455; --s6: #8fa0e8;
+  --on-seg: #11181a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+  padding-block: 24px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 24px; }
+header h1 { font-family: var(--font-display); font-size: clamp(1.7rem, 5vw, 2.6rem); line-height: 1.1; margin: 0 0 6px; text-wrap: balance; letter-spacing: -0.01em; }
+header p { margin: 0; color: var(--muted); max-width: 60ch; }
+.eyebrow { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 760px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+.wheel-col { display: grid; gap: 16px; justify-items: center; min-width: 0; }
+.wheel-box { position: relative; width: 100%; max-width: 440px; aspect-ratio: 1; }
+#wheel { width: 100%; height: 100%; display: block; transition: transform 4.2s cubic-bezier(0.12, 0.7, 0.1, 1); }
+.pointer { position: absolute; left: 50%; top: -6px; width: 28px; height: 34px; transform: translateX(-50%); z-index: 2; }
+.pointer svg { display: block; width: 100%; height: 100%; }
+.btn {
+  font: inherit; font-weight: 700; cursor: pointer; border-radius: 999px; border: 2px solid var(--ink);
+  background: var(--ink); color: var(--bg); padding: 12px 32px; min-height: 48px; font-size: 1.05rem; font-family: var(--font-display);
+}
+.btn:disabled { opacity: 0.55; cursor: progress; }
+.btn.ghost { background: transparent; color: var(--ink); padding: 8px 18px; min-height: 40px; font-size: 0.95rem; }
+.btn:focus-visible, .chip:focus-visible { outline: 3px solid var(--s2); outline-offset: 3px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.chip {
+  font: inherit; font-size: 0.88rem; cursor: pointer; border-radius: 999px; padding: 6px 12px; min-height: 36px;
+  border: 2px solid var(--c); background: var(--c); color: var(--on-seg); font-weight: 600;
+}
+.chip[aria-pressed="false"] { background: transparent; color: var(--muted); border-color: var(--line); text-decoration: line-through; }
+.hint { font-size: 0.82rem; color: var(--muted); margin: 0; text-align: center; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; min-width: 0; display: grid; gap: 14px; }
+.badge { display: inline-block; justify-self: start; padding: 4px 12px; border-radius: 999px; background: var(--c, var(--line)); color: var(--on-seg); font-weight: 700; font-size: 0.85rem; }
+.sub { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.q { font-family: var(--font-display); font-size: clamp(1.25rem, 3.6vw, 1.7rem); line-height: 1.25; margin: 0; text-wrap: balance; }
+.answer { border-left: 4px solid var(--c, var(--line)); padding: 4px 0 4px 14px; margin: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; }
+.placeholder .q { color: var(--muted); }
+.count { font-size: 0.82rem; color: var(--muted); margin: 0; font-variant-numeric: tabular-nums; }
+footer { color: var(--muted); font-size: 0.82rem; }
+footer a { color: inherit; }
+@media (prefers-reduced-motion: reduce) { #wheel { transition-duration: 0.01s !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">De la pantalla al movimiento · Taller TIC · Educación Física</p>
+    <h1>Ruleta del día invisible</h1>
+    <p>Gira la ruleta y responde en voz alta, en parejas o en grupo. Cada tema es una de las cuatro misiones del sitio Mi día invisible.</p>
+  </header>
+
+  <main class="stage">
+    <section class="wheel-col" aria-label="Ruleta">
+      <div class="wheel-box">
+        <div class="pointer" aria-hidden="true">
+          <svg viewBox="0 0 28 34"><path d="M14 34 L2 6 Q14 -4 26 6 Z" fill="var(--ink)"/></svg>
+        </div>
+        <svg id="wheel" viewBox="0 0 400 400" role="img" aria-label="Ruleta con los temas activos"></svg>
+      </div>
+      <button class="btn" id="spin" type="button">Girar la ruleta</button>
+      <div class="chips" id="chips" role="group" aria-label="Temas incluidos"></div>
+      <p class="hint">Toca un tema para sacarlo o ponerlo en la ruleta. Debe quedar al menos uno activo.</p>
+    </section>
+
+    <section class="card placeholder" id="card" aria-live="polite">
+      <p class="eyebrow" style="margin:0">Tu pregunta</p>
+      <p class="q">Gira la ruleta para recibir una pregunta.</p>
+      <p class="sub">Hay 20 preguntas en 4 temas, una por cada misión del sitio.</p>
+    </section>
+  </main>
+
+  <footer>Preguntas basadas en el sitio <a href="https://wilanderculma.github.io/sitio" target="_blank" rel="noopener">Mi día invisible · De la pantalla al movimiento</a>. Esta página no guarda ni envía respuestas.</footer>
+</div>
+
+<script>
+(function () {
+  var TOPICS = [
+    { id: 'origen', icon: '🔍', name: 'El Origen', sub: 'Misión 1 · Descubre tu día invisible', color: 'var(--s1)', qs: [
+      { q: '¿Cuántas horas de tu día pasan sin que las veas? Nombra tres momentos que casi nunca miras con atención.' },
+      { q: '¿Cuántos minutos te mueves en un día normal? ¿Crees que es más o menos de lo que recomienda la OMS para tu edad?', a: 'Las directrices de la OMS que cita el sitio sugieren, para niñas, niños y adolescentes, un promedio de al menos 60 minutos diarios de actividad física de intensidad moderada a vigorosa.' },
+      { q: '¿Cuál es tu franja de quietud más larga del día y cuál es tu franja de posibilidad para moverte?' },
+      { q: 'Si dibujaras tus 24 horas, ¿cuántas dedicas a dormir, al celular y al movimiento?' },
+      { q: '¿Qué dato de tu día te sorprendió más al mirarlo con atención?' }
+    ]},
+    { id: 'habito', icon: '🔁', name: 'El Hábito', sub: 'Misión 2 · Convierte un momento en hábito', color: 'var(--s2)', qs: [
+      { q: 'Lo que piensas de tu rutina y lo que muestran tus datos, ¿coinciden? Da un ejemplo.' },
+      { q: 'Escoge un momento de tu día que podría volverse hábito de movimiento. ¿Cuál es y por qué ese?' },
+      { q: 'Un compañero dice que no tiene tiempo para moverse. ¿Qué le responderías respetando su opinión?' },
+      { q: '¿Qué diferencia hay entre dar una opinión y dar un argumento con datos?' },
+      { q: '¿Qué te haría cambiar de idea sobre una de tus rutinas?' }
+    ]},
+    { id: 'accion', icon: '⚡', name: 'La Acción', sub: 'Misión 3 · Pasa a la acción', color: 'var(--s3)', qs: [
+      { q: '¿En qué cinco momentos de la semana harías tus pausas activas? Sé específico con el lugar y la hora.' },
+      { q: '¿Qué anotarías en tu bitácora después de una pausa activa?' },
+      { q: '¿Cómo te ayudaría una pareja de apoyo a cumplir tu plan?' },
+      { q: 'Si se te olvida hacer una pausa, ¿qué haces para retomar el plan sin frustrarte?' },
+      { q: '¿Qué te serviría más para registrar tu avance: la bitácora, Google Fit o un recordatorio? ¿Por qué?' }
+    ]},
+    { id: 'equipo', icon: '🤝', name: 'El Equipo', sub: 'Misión 4 · Muévete en equipo', color: 'var(--s4)', qs: [
+      { q: '¿Qué juego colaborativo inventarías para que tu vereda o tu barrio se mueva más?' },
+      { q: '¿Qué forma de promover el movimiento funcionaría en tu comunidad y cuál no? Explica por qué.' },
+      { q: '¿Cómo le darías retroalimentación respetuosa a la ficha de juego de otro grupo?' },
+      { q: '¿Qué rol sueles tomar en un equipo y cuál te gustaría probar esta vez?' },
+      { q: 'La gran pregunta del sitio: ¿cómo puedo hacer que moverme sea parte de mi día a día en el entorno donde habito y no solo de la clase de Educación Física?' }
+    ]}
+  ];
+
+  var enabled = {}, queues = {}, rotation = 0, spinning = false, shown = 0;
+  TOPICS.forEach(function (t) { enabled[t.id] = true; });
+
+  var wheel = document.getElementById('wheel');
+  var chipsEl = document.getElementById('chips');
+  var card = document.getElementById('card');
+  var spinBtn = document.getElementById('spin');
+  var NS = 'http://www.w3.org/2000/svg';
+
+  function active() { return TOPICS.filter(function (t) { return enabled[t.id]; }); }
+  function pt(cx, cy, r, deg) { var a = deg * Math.PI / 180; return [cx + r * Math.sin(a), cy - r * Math.cos(a)]; }
+  function el(name, attrs) { var e = document.createElementNS(NS, name); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+
+  function drawWheel() {
+    var list = active(), n = list.length, s = 360 / n, cx = 200, cy = 200, R = 192;
+    while (wheel.firstChild) wheel.removeChild(wheel.firstChild);
+    wheel.appendChild(el('circle', { cx: cx, cy: cy, r: R + 6, fill: 'var(--ink)' }));
+    list.forEach(function (t, i) {
+      var a0 = i * s, a1 = (i + 1) * s, mid = a0 + s / 2;
+      var p0 = pt(cx, cy, R, a0), p1 = pt(cx, cy, R, a1);
+      var d = n === 1
+        ? 'M ' + cx + ' ' + (cy - R) + ' A ' + R + ' ' + R + ' 0 1 1 ' + cx + ' ' + (cy + R) + ' A ' + R + ' ' + R + ' 0 1 1 ' + cx + ' ' + (cy - R) + ' Z'
+        : 'M ' + cx + ' ' + cy + ' L ' + p0[0] + ' ' + p0[1] + ' A ' + R + ' ' + R + ' 0 ' + (s > 180 ? 1 : 0) + ' 1 ' + p1[0] + ' ' + p1[1] + ' Z';
+      wheel.appendChild(el('path', { d: d, fill: t.color, stroke: 'var(--bg)', 'stroke-width': 3 }));
+      var flip = mid > 180;
+      var g = el('g', { transform: 'translate(' + cx + ' ' + cy + ') rotate(' + (flip ? mid + 90 : mid - 90) + ')' });
+      var tx = el('text', { x: flip ? -(R - 22) : (R - 22), y: 0, 'text-anchor': flip ? 'start' : 'end', 'dominant-baseline': 'central', fill: 'var(--on-seg)', 'font-size': n > 4 ? 19 : 22, 'font-weight': 700, 'font-family': 'var(--font-display)' });
+      tx.textContent = t.icon + '  ' + t.name;
+      g.appendChild(tx);
+      wheel.appendChild(g);
+    });
+    wheel.appendChild(el('circle', { cx: cx, cy: cy, r: 26, fill: 'var(--bg)', stroke: 'var(--ink)', 'stroke-width': 4 }));
+    wheel.style.transition = 'none';
+    wheel.style.transform = 'rotate(0deg)';
+    rotation = 0;
+    void wheel.getBoundingClientRect();
+    wheel.style.transition = '';
+  }
+
+  function drawChips() {
+    chipsEl.innerHTML = '';
+    TOPICS.forEach(function (t) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.id = 'chip-' + t.id;
+      b.style.setProperty('--c', t.color);
+      b.setAttribute('aria-pressed', enabled[t.id] ? 'true' : 'false');
+      b.textContent = t.icon + ' ' + t.name;
+      b.addEventListener('click', function () {
+        if (spinning) return;
+        if (enabled[t.id] && active().length === 1) return;
+        enabled[t.id] = !enabled[t.id];
+        drawChips(); drawWheel();
+      });
+      chipsEl.appendChild(b);
+    });
+  }
+
+  function nextQuestion(t) {
+    if (!queues[t.id] || !queues[t.id].length) {
+      var a = t.qs.slice();
+      for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; }
+      queues[t.id] = a;
+    }
+    return queues[t.id].pop();
+  }
+
+  function showQuestion(t) {
+    var item = nextQuestion(t);
+    shown += 1;
+    card.className = 'card';
+    card.style.setProperty('--c', t.color);
+    card.innerHTML = '';
+    var badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = t.icon + ' ' + t.name;
+    var sub = document.createElement('p'); sub.className = 'sub'; sub.textContent = t.sub;
+    var q = document.createElement('p'); q.className = 'q'; q.textContent = item.q;
+    card.appendChild(badge); card.appendChild(sub); card.appendChild(q);
+    var ans = null;
+    if (item.a) {
+      ans = document.createElement('p'); ans.className = 'answer'; ans.id = 'answer'; ans.hidden = true; ans.textContent = item.a;
+      card.appendChild(ans);
+    }
+    var row = document.createElement('div'); row.className = 'row';
+    if (ans) {
+      var rb = document.createElement('button'); rb.type = 'button'; rb.className = 'btn ghost'; rb.id = 'reveal'; rb.textContent = 'Ver respuesta';
+      rb.addEventListener('click', function () { ans.hidden = !ans.hidden; rb.textContent = ans.hidden ? 'Ver respuesta' : 'Ocultar respuesta'; });
+      row.appendChild(rb);
+    }
+    var again = document.createElement('button'); again.type = 'button'; again.className = 'btn ghost'; again.id = 'again'; again.textContent = 'Otra pregunta de este tema';
+    again.addEventListener('click', function () { showQuestion(t); });
+    row.appendChild(again);
+    card.appendChild(row);
+    var c = document.createElement('p'); c.className = 'count'; c.textContent = 'Preguntas giradas: ' + shown;
+    card.appendChild(c);
+  }
+
+  function spin() {
+    if (spinning) return;
+    var list = active(), n = list.length, s = 360 / n;
+    var idx = Math.floor(Math.random() * n);
+    var jitter = (Math.random() - 0.5) * s * 0.7;
+    var desired = ((360 - ((idx + 0.5) * s + jitter)) % 360 + 360) % 360;
+    var cur = ((rotation % 360) + 360) % 360;
+    var delta = ((desired - cur) % 360 + 360) % 360;
+    rotation += 360 * 5 + delta;
+    spinning = true; spinBtn.disabled = true; spinBtn.textContent = 'Girando…';
+    var done = false;
+    function finish() {
+      if (done) return; done = true;
+      spinning = false; spinBtn.disabled = false; spinBtn.textContent = 'Girar otra vez';
+      showQuestion(list[idx]);
+    }
+    wheel.addEventListener('transitionend', function h(e) { if (e.target !== wheel) return; wheel.removeEventListener('transitionend', h); finish(); });
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(finish, reduce ? 100 : 4500);
+    wheel.style.transform = 'rotate(' + rotation + 'deg)';
+  }
+
+  spinBtn.addEventListener('click', spin);
+  drawChips(); drawWheel();
+})();
+</script>
+
+</body></html>
